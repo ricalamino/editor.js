@@ -23,12 +23,21 @@
     <div class="ce-example__content _ce-example__content--small">
       <div id="editorjs"></div>
 
-      <div class="ce-example__button" id="saveButton">
+      <div class="ce-example__button" id="saveButton" style="display: none">
         editor.save()
       </div>
+
+      <div class="ce-example__button" id="downloadButton">
+        download.json()
+      </div>
+
+      <div class="ce-example__button">
+        <input type="file" id="filer" >
+      </div>
+      
     </div>
     <div class="ce-example__output">
-      <pre class="ce-example__output-content" id="output"></pre>
+      <pre class="ce-example__output-content" id="output" style="display: none"></pre>
 
       <div class="ce-example__output-footer">
         <a href="https://codex.so" style="font-weight: bold;">Made by CodeX</a>
@@ -60,6 +69,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@editorjs/marker@latest"></script><!-- Marker -->
   <script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@latest"></script><!-- Inline Code -->
 
+  <script src="https://fastcdn.org/FileSaver.js/1.1.20151003/FileSaver.min.js"></script> <!-- FileSaver CDN-->
+
   <!-- Load Editor.js's Core -->
   <script src="../dist/editor.js"></script>
 
@@ -69,6 +80,9 @@
      * Saving button
      */
     const saveButton = document.getElementById('saveButton');
+    const downloadButton = document.getElementById('downloadButton');
+    const filer = document.getElementById('filer');
+    
 
     /**
      * To initialize the Editor, create a new instance with configuration object
@@ -271,14 +285,136 @@
       }
     });
 
-    /**
-     * Saving example
-     */
+    
+    
     saveButton.addEventListener('click', function () {
       editor.save().then((savedData) => {
         cPreview.show(savedData, document.getElementById("output"));
       });
     });
+
+    const reader = new FileReader();
+
+    reader.addEventListener('load', function(event) {
+      
+      document.getElementById("editorjs").innerHTML = "";
+      editor = new EditorJS({
+        /**
+         * Wrapper of Editor
+         */
+        holderId: 'editorjs',
+
+        /**
+         * Tools list
+         */
+        tools: {
+          /**
+           * Each Tool is a Plugin. Pass them via 'class' option with necessary settings {@link docs/tools.md}
+           */
+          header: {
+            class: Header,
+            inlineToolbar: ['link'],
+            config: {
+              placeholder: 'Header'
+            },
+            shortcut: 'CMD+SHIFT+H'
+          },
+
+          /**
+           * Or pass class directly without any configuration
+           */
+          image: {
+            class: SimpleImage,
+            inlineToolbar: ['link'],
+          },
+
+          list: {
+            class: List,
+            inlineToolbar: true,
+            shortcut: 'CMD+SHIFT+L'
+          },
+
+          checklist: {
+            class: Checklist,
+            inlineToolbar: true,
+          },
+
+          quote: {
+            class: Quote,
+            inlineToolbar: true,
+            config: {
+              quotePlaceholder: 'Enter a quote',
+              captionPlaceholder: 'Quote\'s author',
+            },
+            shortcut: 'CMD+SHIFT+O'
+          },
+
+          warning: Warning,
+
+          marker: {
+            class:  Marker,
+            shortcut: 'CMD+SHIFT+M'
+          },
+
+          code: {
+            class:  CodeTool,
+            shortcut: 'CMD+SHIFT+C'
+          },
+
+          delimiter: Delimiter,
+
+          inlineCode: {
+            class: InlineCode,
+            shortcut: 'CMD+SHIFT+C'
+          },
+
+          linkTool: LinkTool,
+
+          embed: Embed,
+
+          table: {
+            class: Table,
+            inlineToolbar: true,
+            shortcut: 'CMD+ALT+T'
+          },
+
+        },
+
+        /**
+         * This Tool will be used as default
+         */
+        // initialBlock: 'paragraph',
+
+        /**
+         * Initial Editor data
+         */
+        data: JSON.parse(event.target.result),
+        onReady: function(){
+          saveButton.click();
+        },
+        onChange: function() {
+          console.log('something changed');
+        }
+      });
+
+
+    });
+
+    filer.addEventListener('change', function (event) {
+      var selectedFile = event.target.files[0];
+      var result = document.getElementById("output");
+      reader.readAsText(selectedFile);
+    });
+
+
+    downloadButton.addEventListener('click', function () {
+      editor.save().then((savedData) => {
+        var blob = new Blob([JSON.stringify(savedData)], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, "myText.json");    
+      });
+    });
+
+    
   </script>
 </body>
 </html>
